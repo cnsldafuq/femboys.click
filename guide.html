@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderation Guide - The Fem-pire :3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-4">Moderation Guide - The Fem-pire :3</h1>
+
+        <p class="mb-6 text-lg text-gray-700 dark:text-gray-300">
+            Welcome, staff members! This guide helps you enforce server rules and handle violations.
+            <br>You can search for specific violations using the search bar below!
+            <br><br>Please note that infractions that happened in DMs should be sanctionned with a proof image sent with the command.
+        </p>
+
+        <!-- Search Bar -->
+        <input type="text" id="search" placeholder="Search violations..." 
+            class="w-full px-4 py-2 mb-4 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800"
+            onkeyup="filterViolations()">
+        
+        <!-- Violations Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm lg:text-base">
+                <thead class="bg-gray-200 dark:bg-gray-800">
+                    <tr>
+                        <th class="px-2 py-1 text-left sm:px-3 sm:py-2 lg:px-4 lg:py-3">Violation</th>
+                        <th class="px-2 py-1 text-left sm:px-3 sm:py-2 lg:px-4 lg:py-3">Example Message</th>
+                        <th class="px-2 py-1 text-left sm:px-3 sm:py-2 lg:px-4 lg:py-3">Sanctions</th>
+                    </tr>
+                </thead>
+                <tbody id="violationsTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Violation Data with Aliases
+        const violations = [
+            {
+                name: "N-word hard R/F-slur",
+                aliases: ["n-word", "nword", "n word", "slur", "fslur", "f slur", "f-slur"],
+                example: `Self-explanatory`,
+                sanctions: ["Ban"]
+            },
+            {
+                name: "Soft n-word",
+                aliases: ["n-word", "nword", "n word", "slur"],
+                example: `The one that ends with 'a'`,
+                sanctions: ["Warn", "Mute (4h-8h)", "Ban (if repeated)"]
+            },
+            {
+                name: "Harassment/rude",
+                aliases: ["death threat", "threat", "harrassment", "bullying", "insults", "rude", "language"],
+                example: `"Kill yourself", targetted insults etc...`,
+                sanctions: ["Mute (8h-24h)", "Ban (if severe or repeated)"]
+            },
+            {
+                name: "Spam/flood (no malicious intent)",
+                aliases: ["spam", "flood", "spamming", "flooding"],
+                example: `Spamming without any malicious intent`,
+                sanctions: ["Mute (10m-2h)", "Ban (if repeated)"]
+            },
+            {
+                name: "Raiding or harming the server",
+                aliases: ["raiding", "nuking"],
+                example: `Self-explanatory`,
+                sanctions: ["Ban"]
+            },
+            {
+                name: "NSFW media",
+                aliases: ["nsfw", "porn"],
+                example: `Porn image/video`,
+                sanctions: ["Ban"]
+            },
+            {
+                name: "NSFW talking",
+                aliases: ["nsfw"],
+                example: `"I’m over strokin my dick I got lotion on my dick rn I’m just stroking my shi" (this was posted on the server btw 💀)`,
+                sanctions: ["Warn", "Mute (1h-24h depending on the severity)", "Ban (if too severe or repeated)"]
+            },
+            {
+                name: "Self-Promotion (outside of #ads)",
+                aliases: ["advertisement", "ads"],
+                example: `"Go join my new server discord.gg/garbagfemboyserver"`,
+                sanctions: ["Warning", "Mute (1h-6h)"]
+            },
+            {
+                name: "DM-Advertising",
+                aliases: ["dm advertising", "advertising", "dm-advertising", "advertisement", "ads"],
+                example: `"Go join my new server discord.gg/garbagfemboyserver" in DMs`,
+                sanctions: ["Ban"]
+            },
+            {
+                name: "Wrong language",
+                aliases: ["language", "spanish", "russian"],
+                example: `"no para bueno" 🤑🤑🤑🤑`,
+                sanctions: ["Warn", "Mute (1h-6h)", "Ban (if repeated)"]
+            },
+            {
+                name: "Racist-ish/Homophobic-ish/Transphobic-ish",
+                aliases: ["racism", "racist", "homophobic", "homophobe", "homophobia", "transphobe", "transphobic", "transphobia"],
+                example: `"She can be a woman not a female"`,
+                sanctions: ["Warn", "Ban (if repeated)"]
+            },
+            {
+                name: "Actually racist/homophobic/transphobic",
+                aliases: ["racism", "racist", "homophobic", "homophobe", "homophobia", "transphobe", "transphobic", "transphobia"],
+                example: `"No way this ape is talking"<br>"We must unite against the dirty jews"<br>"He isn't a female nor is he a woman"`,
+                sanctions: ["Ban"]
+            },
+            {
+                name: "Pedophilia/Rape joke",
+                aliases: ["pedophile", "pedophilia", "minor", "adult", "underaged"],
+                example: `I am NOT finding an example for this`,
+                sanctions: ["Ban"]
+            },
+            {
+                name: "Pedophilia",
+                aliases: ["pedophile", "pedophilia", "minor", "adult", "underaged", "dm"],
+                example: `An adult flirts with a minor or interacts with him in a sexual way`,
+                sanctions: ["Ban"]
+            },
+            {
+                name: "Scamming",
+                aliases: ["scam", "ip", "ip-grabber", "ip grabber", "grabify", "link", "sugar", "sugar mommy", "sugar-mommy", "sugar-daddy", "sugar daddy", "artist", "scammer"],
+                example: `This includes, IP grabbers and any type of DM scamming (sugar-mommy/artist/Discord-support)`,
+                sanctions: ["Ban"]
+            }
+        ];
+
+        // Function to Build the Table
+        function buildTable() {
+            const tableBody = document.getElementById("violationsTable");
+            tableBody.innerHTML = ""; // Clear existing rows
+
+            violations.forEach(violation => {
+                const row = document.createElement("tr");
+                row.classList.add("border-t", "border-gray-300", "dark:border-gray-700");
+
+                row.innerHTML = `
+                    <td class="px-4 py-2">${violation.name}</td>
+                    <td class="px-4 py-2">${violation.example}</td>
+                    <td class="px-4 py-2">
+                        <ul class="list-disc ml-4">
+                            ${violation.sanctions.map(sanction => `<li>${sanction}</li>`).join("")}
+                        </ul>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Function to Filter Table with Aliases
+        function filterViolations() {
+            const searchInput = document.getElementById("search").value.toLowerCase();
+            const tableBody = document.getElementById("violationsTable");
+            tableBody.innerHTML = ""; // Clear table before adding filtered rows
+
+            const filteredViolations = violations.filter(v => {
+                return (
+                    v.name.toLowerCase().includes(searchInput) ||
+                    v.aliases.some(alias => alias.includes(searchInput))
+                );
+            });
+
+            filteredViolations.forEach(violation => {
+                const row = document.createElement("tr");
+                row.classList.add("border-t", "border-gray-300", "dark:border-gray-700");
+
+                row.innerHTML = `
+                    <td class="px-4 py-2">${violation.name}</td>
+                    <td class="px-4 py-2">${violation.example}</td>
+                    <td class="px-4 py-2">
+                        <ul class="list-disc ml-4">
+                            ${violation.sanctions.map(sanction => `<li>${sanction}</li>`).join("")}
+                        </ul>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Build the table on page load
+        document.addEventListener("DOMContentLoaded", buildTable);
+    </script>
+</body>
+</html>
